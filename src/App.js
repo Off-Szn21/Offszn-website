@@ -15,7 +15,12 @@ const LOGO_SVG = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://ww
 
 const sendToWhatsApp = (data) => {
   const msg = encodeURIComponent(`New Sign-Up from Off-Szn Website:\n\nName: ${data.name}\nLocation: ${data.location}\nGoal: ${data.goal}\nPhone: ${data.phone}\n\nSent from offszn.com`);
-  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, "_blank");
+  window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+};
+
+const sendPlanToWhatsApp = (planName, price) => {
+  const msg = encodeURIComponent(`Hi Off-Szn! I'm interested in the ${planName} plan (₦${price} incl. VAT). I'd like to get started.`);
+  window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
 };
 
 const scrollToSection = (id) => { document.getElementById(id)?.scrollIntoView({behavior:"smooth"}); };
@@ -278,15 +283,16 @@ const MembershipsPage = () => {
 
 const PlanCard = ({name, sub, price, features, highlight}) => {
   const [h, setH] = useState(false);
+  const priceWithVat = fmtPrice(price);
   return (
     <div onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{border:highlight?"2px solid #fff":"1px solid rgba(255,255,255,0.06)",padding:28,transition:"all 0.5s cubic-bezier(0.16,1,0.3,1)",transform:h?"translateY(-8px)":"none",background:h?"rgba(255,255,255,0.03)":"transparent",position:"relative",display:"flex",flexDirection:"column"}}>
       {highlight&&<div style={{position:"absolute",top:-12,left:"50%",transform:"translateX(-50%)",background:"#fff",color:"#000",fontSize:11,fontWeight:600,padding:"4px 16px",letterSpacing:1,fontFamily:FONT_LIGHT}}>POPULAR</div>}
       <h3 style={{fontSize:17,fontWeight:600,color:"#fff",margin:"0 0 4px",fontFamily:FONT_LIGHT}}>{name}</h3>
       {sub&&<p style={{fontSize:12,color:"rgba(255,255,255,0.35)",margin:"0 0 16px",fontFamily:FONT_LIGHT}}>{sub}</p>}
-      <div style={{margin:"0 0 4px"}}><span style={{fontSize:30,fontWeight:700,color:"#fff",fontFamily:FONT}}>&#8358;{fmtPrice(price)}</span></div>
+      <div style={{margin:"0 0 4px"}}><span style={{fontSize:30,fontWeight:700,color:"#fff",fontFamily:FONT}}>&#8358;{priceWithVat}</span></div>
       <p style={{fontSize:11,color:"rgba(255,255,255,0.25)",margin:"0 0 20px",fontFamily:FONT_LIGHT}}>incl. 7.5% VAT</p>
       <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24,flex:1}}>{features.map((f,i)=><div key={i} style={{display:"flex",alignItems:"center",gap:8}}><span style={{color:"#fff",fontSize:12}}>&#10003;</span><span style={{color:"rgba(255,255,255,0.45)",fontSize:13,fontFamily:FONT_LIGHT}}>{f}</span></div>)}</div>
-      {highlight?<BtnPrimary onClick={()=>{}} label="Get started" style={{width:"100%",padding:"12px"}}/>:<BtnOutline onClick={()=>{}} label="Get started" full/>}
+      {highlight?<BtnPrimary onClick={()=>sendPlanToWhatsApp(name+(sub?" ("+sub+")":""), priceWithVat)} label="Get started" style={{width:"100%",padding:"12px"}}/>:<BtnOutline onClick={()=>sendPlanToWhatsApp(name+(sub?" ("+sub+")":""), priceWithVat)} label="Get started" full/>}
     </div>
   );
 };
