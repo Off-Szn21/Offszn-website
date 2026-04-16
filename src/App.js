@@ -71,11 +71,11 @@ const Carousel = ({images}) => {
   );
 };
 
-const LogoSmall = () => <img src={LOGO_SVG} alt="Off-Szn" style={{height:28,width:"auto",display:"block"}}/>;
+const LogoSmall = () => <img src={LOGO_SVG} alt="Off-Szn" style={{height:38,width:"auto",display:"block"}}/>;
 
 const CartBtn = ({count, onClick}) => {
   const [h, setH] = useState(false);
-  return <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{background:"none",border:"none",cursor:"pointer",padding:4,transition:"opacity 0.3s",opacity:h?0.6:1,fontFamily:FONT_LIGHT,fontSize:14,fontWeight:500,color:"#fff",letterSpacing:2}}>CART{count>0&&<span style={{marginLeft:4,background:"#fff",color:"#000",fontSize:10,fontWeight:700,width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center",verticalAlign:"middle"}}>{count}</span>}</button>;
+  return <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{background:"none",border:"none",cursor:"pointer",padding:4,transition:"opacity 0.3s",opacity:h?0.6:1,fontFamily:FONT_LIGHT,fontSize:14,fontWeight:500,color:"#fff",letterSpacing:2,whiteSpace:"nowrap"}}>CART{count>0&&<span style={{marginLeft:4,background:"#fff",color:"#000",fontSize:10,fontWeight:700,width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center",verticalAlign:"middle"}}>{count}</span>}</button>;
 };
 
 const WhatsAppButton = () => {
@@ -123,7 +123,7 @@ const HamburgerMenu = ({isOpen, setIsOpen, setCurrentPage}) => {
   ];
   return (
     <div style={{position:"fixed",top:64,left:0,width:"100%",height:isOpen?"calc(100% - 64px)":"0",background:"rgba(0,0,0,0.98)",zIndex:999,overflow:"hidden",transition:"height 0.4s cubic-bezier(0.16,1,0.3,1)"}}>
-      <div style={{padding:"40px 32px",display:"flex",flexDirection:"column"}}>
+      <div style={{padding:"0 32px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100%",gap:0}}>
         {items.map((item,i)=><AnimateIn key={i} delay={isOpen?i*0.05:0} direction="right"><MenuItem label={item.label} onClick={item.action}/></AnimateIn>)}
         <AnimateIn delay={isOpen?0.15:0} direction="right"><MenuItem label="Sign up" onClick={()=>setSignUpOpen(!signUpOpen)} hasArrow isOpen={signUpOpen}/></AnimateIn>
         {signUpOpen&&<div style={{paddingLeft:20}}><AnimateIn delay={0.05} direction="right"><MenuItem label="Quick sign up" onClick={()=>{setCurrentPage("signup");setIsOpen(false);}} sub/></AnimateIn><AnimateIn delay={0.1} direction="right"><MenuItem label="Book consultation" onClick={()=>{setCurrentPage("consultation");setIsOpen(false);}} sub/></AnimateIn></div>}
@@ -137,7 +137,7 @@ const HamburgerMenu = ({isOpen, setIsOpen, setCurrentPage}) => {
 
 const MenuItem = ({label, onClick, hasArrow, isOpen, sub}) => {
   const [h, setH] = useState(false);
-  return <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:sub?"12px 0":"18px 0",background:"none",border:"none",borderBottom:"1px solid rgba(255,255,255,0.06)",cursor:"pointer",transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",color:h?"rgba(255,255,255,0.4)":"#fff",transform:h?"translateX(12px)":"translateX(0)",fontFamily:FONT_LIGHT}}><span style={{fontSize:sub?15:20,fontWeight:sub?400:500,letterSpacing:2}}>{label}</span>{hasArrow&&<span style={{fontSize:12,transition:"transform 0.3s",transform:isOpen?"rotate(90deg)":"rotate(0)"}}>{"\u25B6"}</span>}</button>;
+  return <button onClick={onClick} onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} style={{display:"flex",alignItems:"center",justifyContent:"center",width:"100%",padding:sub?"6px 0":"10px 0",background:"none",border:"none",cursor:"pointer",transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",color:h?"rgba(255,255,255,0.4)":"#fff",fontFamily:FONT,textAlign:"center"}}><span style={{fontSize:sub?18:40,fontWeight:sub?500:700,letterSpacing:2}}>{label}</span></button>;
 };
 
 const HeroSection = () => {
@@ -205,7 +205,7 @@ const StepCard = ({num, title, desc}) => {
 
 const IntroOffer = () => {
   const [loading, setLoading] = useState(false);
-  const handleBuy = () => { setLoading(true); setTimeout(()=>{setLoading(false);alert("Paystack checkout triggers here.");},1500); };
+  const handleBuy = () => { setLoading(true); setTimeout(()=>{setLoading(false); const msg = encodeURIComponent("Hi Off-Szn! I'd like to purchase the 3-Session Starter Pack (₦" + fmtPrice(basePrice) + " incl. VAT). How do I proceed?"); window.location.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + msg;},1000); };
   const basePrice = 45000;
   return (
     <section id="intro-offer" style={{padding:"100px 24px",background:"#000",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
@@ -471,7 +471,7 @@ export default function App() {
 
   return (
     <div style={{background:"#000",minHeight:"100vh",fontFamily:FONT_LIGHT,color:"#fff",overflowX:"hidden"}}>
-      <div style={{position:"fixed",top:0,left:0,width:"100%",height:64,background:"rgba(0,0,0,0.92)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",zIndex:1000,borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+      <div style={{position:"fixed",top:0,left:0,width:"100%",height:64,background:"transparent",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",zIndex:1000}}>
         <button onClick={()=>{setMenuOpen(!menuOpen);setCartOpen(false);}} style={{background:"none",border:"none",cursor:"pointer",padding:8,display:"flex",flexDirection:"column",gap:5}}>
           <span style={{display:"block",width:24,height:2,background:"#fff",transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",transform:menuOpen?"rotate(45deg) translate(5px,5px)":"none"}}/>
           <span style={{display:"block",width:24,height:2,background:"#fff",transition:"all 0.4s cubic-bezier(0.16,1,0.3,1)",opacity:menuOpen?0:1}}/>
