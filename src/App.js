@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, query, orderBy, getDocs, onSnapshot } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, onSnapshot, deleteDoc } from "firebase/firestore";
 
 const firebaseConfig={apiKey:"AIzaSyCCzFtgLd-Dn76q4MMbE8Dqs3ZhENfuR3E",authDomain:"offszn-portal.firebaseapp.com",projectId:"offszn-portal",storageBucket:"offszn-portal.firebasestorage.app",messagingSenderId:"1027879996229",appId:"1:1027879996229:web:7d709b06d0a5a07d2e8c2c"};
 const app=initializeApp(firebaseConfig);const auth=getAuth(app);const db=getFirestore(app);
@@ -175,11 +175,11 @@ return(<div>
 </div>
 </div>);};
 
-const ClientManager=({c,back,refresh,exLib,showToast})=>{
+const ClientManager=({c,back,refresh,exLib,showToast,onDelete})=>{
 const[tab,setTab]=useState("overview");
 const tabs=["overview","workouts","subscription","messages","progress"];
 return(<PW t="" st=""><div style={{maxWidth:700,margin:"0 auto"}}>
-<button onClick={back} style={{background:"none",border:"none",color:"rgba(255,255,255,.5)",fontSize:14,cursor:"pointer",fontFamily:L,marginBottom:20}}>&#8592; Back to clients</button>
+<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}><button onClick={back} style={{background:"none",border:"none",color:"rgba(255,255,255,.5)",fontSize:14,cursor:"pointer",fontFamily:L}}>&#8592; Back to clients</button><button onClick={onDelete} style={{background:"none",border:"1px solid rgba(255,100,100,.3)",color:"rgba(255,100,100,.6)",fontSize:12,cursor:"pointer",fontFamily:L,padding:"6px 16px",transition:"all .3s"}} onMouseEnter={e=>{e.target.style.background="rgba(255,100,100,.1)";e.target.style.color="rgba(255,100,100,.9)";}} onMouseLeave={e=>{e.target.style.background="none";e.target.style.color="rgba(255,100,100,.6)";}}>Delete client</button></div>
 <div style={{marginBottom:24}}><h2 style={{fontSize:24,fontWeight:700,color:"#fff",margin:"0 0 4px",fontFamily:F}}>{c.name}</h2><p style={{color:"rgba(255,255,255,.35)",fontSize:14,margin:"0 0 2px",fontFamily:L}}>{c.email}</p><p style={{color:"rgba(255,255,255,.25)",fontSize:13,margin:0,fontFamily:L}}>{c.phone}</p></div>
 <div style={{display:"flex",gap:0,marginBottom:32,flexWrap:"wrap",overflowX:"auto"}}>{tabs.map(t=><button key={t} onClick={()=>setTab(t)} style={{padding:"10px 16px",background:tab===t?"#fff":"transparent",color:tab===t?"#000":"rgba(255,255,255,.4)",border:"1px solid",borderColor:tab===t?"#fff":"rgba(255,255,255,.08)",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:L,letterSpacing:1,textTransform:"uppercase",whiteSpace:"nowrap"}}>{t}</button>)}</div>
 {tab==="overview"&&<CoachOverview c={c}/>}
@@ -201,7 +201,11 @@ const addFromLib=(exName)=>{setExs([...exs,{name:exName,sets:"3",reps:"10",weigh
 const save=async()=>{if(!nm.trim()){showToast("Enter workout name");return;}if(exs.filter(e=>e.name.trim()).length===0){showToast("Add at least 1 exercise");return;}setSv(true);const wk=c.program?.workouts||[];const nw={id:`w${Date.now()}`,name:nm,date:dt,exercises:exs.filter(e=>e.name.trim())};const updated=[...wk,nw];await updateDoc(doc(db,"clients",c.id),{"program.workouts":updated,"program.current":prog||c.program?.current||""});setNm("");setExs([{name:"",sets:"3",reps:"10",weight:""}]);setSv(false);await refresh();showToast("Workout saved");};
 const saveProg=async()=>{await updateDoc(doc(db,"clients",c.id),{"program.current":prog});await refresh();showToast("Program description saved");};
 const delW=async(wid)=>{const wk=(c.program?.workouts||[]).filter(w=>w.id!==wid);await updateDoc(doc(db,"clients",c.id),{"program.workouts":wk});await refresh();showToast("Workout deleted");};
+const dupW=async(w)=>{setShowDup(w);};
+const[showDup,setShowDup]=useState(null);const[dupDates,setDupDates]=useState("");
+const confirmDup=async()=>{if(!showDup||!dupDates.trim())return;const dates=dupDates.split(",").map(d=>d.trim()).filter(d=>d);const wk=c.program?.workouts||[];const newOnes=dates.map(d=>({...showDup,id:`w${Date.now()}${Math.random().toString(36).slice(2,6)}`,date:d}));await updateDoc(doc(db,"clients",c.id),{"program.workouts":[...wk,...newOnes]});setShowDup(null);setDupDates("");await refresh();showToast(`Duplicated to ${dates.length} day${dates.length>1?"s":""}`);};
 const checkIn=async()=>{const ci=c.checkIns||[];const entry={date:today(),time:new Date().toLocaleTimeString(),by:"Coach"};await updateDoc(doc(db,"clients",c.id),{checkIns:[...ci,entry]});await refresh();showToast("Session checked in");};
+const deleteCheckIn=async(idx)=>{const ci=[...(c.checkIns||[])];ci.splice(idx,1);await updateDoc(doc(db,"clients",c.id),{checkIns:ci});await refresh();showToast("Check-in deleted");};
 const existing=c.program?.workouts||[];
 const checkIns=c.checkIns||[];
 return(<div>
@@ -209,7 +213,8 @@ return(<div>
 <p style={{color:"#fff",fontSize:14,margin:"0 0 12px",fontFamily:L,fontWeight:600,letterSpacing:1}}>SESSION CHECK-IN</p>
 <p style={{color:"rgba(255,255,255,.4)",fontSize:13,margin:"0 0 16px",fontFamily:L}}>Check in on behalf of the client when they arrive for their session.</p>
 <BP onClick={checkIn} label="Check in now" style={{padding:"12px 32px",marginBottom:16}}/>
-{checkIns.length>0&&<div style={{marginTop:12}}><p style={{color:"rgba(255,255,255,.35)",fontSize:12,margin:"0 0 8px",fontFamily:L,letterSpacing:1}}>RECENT CHECK-INS ({checkIns.length})</p>{[...checkIns].reverse().slice(0,10).map((ci,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)"}}><span style={{color:"#fff",fontSize:14,fontFamily:L}}>{ci.date} at {ci.time}</span><span style={{color:"rgba(255,255,255,.4)",fontSize:12,fontFamily:L}}>by {ci.by}</span></div>)}</div>}
+{checkIns.length>0&&<div style={{marginTop:12}}><p style={{color:"rgba(255,255,255,.35)",fontSize:12,margin:"0 0 8px",fontFamily:L,letterSpacing:1}}>RECENT CHECK-INS ({checkIns.length})</p>{[...checkIns].reverse().slice(0,10).map((ci,i)=>{const realIdx=checkIns.length-1-i;return<div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.04)"}}><span style={{color:"#fff",fontSize:14,fontFamily:L}}>{ci.date} at {ci.time}</span><div style={{display:"flex",gap:12,alignItems:"center"}}><span style={{color:"rgba(255,255,255,.4)",fontSize:12,fontFamily:L}}>by {ci.by}</span><button onClick={()=>deleteCheckIn(realIdx)} style={{background:"none",border:"none",color:"rgba(255,100,100,.5)",cursor:"pointer",fontSize:12,fontFamily:L}}>delete</button></div></div>}
+)}</div>}
 </div>
 <div style={{border:"1px solid rgba(255,255,255,.06)",padding:24,marginBottom:20}}>
 <p style={{color:"#fff",fontSize:14,margin:"0 0 12px",fontFamily:L,fontWeight:600,letterSpacing:1}}>PROGRAM DESCRIPTION</p>
@@ -233,7 +238,8 @@ return(<div>
 
 <div style={{border:"1px solid rgba(255,255,255,.06)",padding:24}}>
 <p style={{color:"#fff",fontSize:14,margin:"0 0 16px",fontFamily:L,fontWeight:600,letterSpacing:1}}>ASSIGNED WORKOUTS ({existing.length})</p>
-{existing.length>0?[...existing].sort((a,b)=>a.date>b.date?1:-1).map(w=><div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"14px 0",borderBottom:"1px solid rgba(255,255,255,.06)"}}><div><p style={{color:"#fff",fontSize:15,fontWeight:600,margin:"0 0 4px",fontFamily:L}}>{w.name}</p><p style={{color:"rgba(255,255,255,.5)",fontSize:13,margin:"0 0 6px",fontFamily:L}}>{w.date} ({dayName(w.date)})</p>{w.exercises?.map((e,j)=><p key={j} style={{color:"rgba(255,255,255,.6)",fontSize:13,margin:"2px 0",fontFamily:L}}>&#8226; {e.name}: {e.sets}x{e.reps}{e.weight?` @ ${e.weight}kg`:""}</p>)}</div><button onClick={()=>delW(w.id)} style={{background:"none",border:"1px solid rgba(255,255,255,.1)",color:"rgba(255,255,255,.4)",cursor:"pointer",fontSize:12,padding:"6px 12px",fontFamily:L,whiteSpace:"nowrap"}}>Delete</button></div>):<p style={{color:"rgba(255,255,255,.3)",fontSize:14,fontFamily:L}}>No workouts assigned yet.</p>}
+{showDup&&<div style={{border:"1px solid rgba(255,255,255,.2)",padding:20,marginBottom:16,background:"rgba(255,255,255,.03)"}}><p style={{color:"#fff",fontSize:14,fontWeight:600,margin:"0 0 4px",fontFamily:L}}>Duplicate: {showDup.name}</p><p style={{color:"rgba(255,255,255,.4)",fontSize:12,margin:"0 0 12px",fontFamily:L}}>Enter dates to copy this workout to (comma-separated, e.g. 2026-05-12, 2026-05-14, 2026-05-16)</p><input value={dupDates} onChange={e=>setDupDates(e.target.value)} placeholder="2026-05-12, 2026-05-14, 2026-05-16" style={{width:"100%",padding:"12px 16px",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.15)",color:"#fff",fontSize:14,outline:"none",fontFamily:L,boxSizing:"border-box",marginBottom:12}}/><div style={{display:"flex",gap:8}}><BP onClick={confirmDup} label="Duplicate" style={{padding:"10px 24px"}}/><BO onClick={()=>{setShowDup(null);setDupDates("");}} label="Cancel" style={{padding:"10px 24px"}}/></div></div>}
+{existing.length>0?[...existing].sort((a,b)=>a.date>b.date?1:-1).map(w=><div key={w.id} style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",padding:"14px 0",borderBottom:"1px solid rgba(255,255,255,.06)"}}><div><p style={{color:"#fff",fontSize:15,fontWeight:600,margin:"0 0 4px",fontFamily:L}}>{w.name}</p><p style={{color:"rgba(255,255,255,.5)",fontSize:13,margin:"0 0 6px",fontFamily:L}}>{w.date} ({dayName(w.date)})</p>{w.exercises?.map((e,j)=><p key={j} style={{color:"rgba(255,255,255,.6)",fontSize:13,margin:"2px 0",fontFamily:L}}>&#8226; {e.name}: {e.sets}x{e.reps}{e.weight?` @ ${e.weight}kg`:""}</p>)}</div><div style={{display:"flex",gap:8,flexShrink:0}}><button onClick={()=>dupW(w)} style={{background:"none",border:"1px solid rgba(255,255,255,.15)",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:12,padding:"6px 12px",fontFamily:L}}>Duplicate</button><button onClick={()=>delW(w.id)} style={{background:"none",border:"1px solid rgba(255,100,100,.2)",color:"rgba(255,100,100,.5)",cursor:"pointer",fontSize:12,padding:"6px 12px",fontFamily:L}}>Delete</button></div></div>):<p style={{color:"rgba(255,255,255,.3)",fontSize:14,fontFamily:L}}>No workouts assigned yet.</p>}
 </div>
 </div>);};
 
