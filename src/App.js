@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, onSnapshot, deleteDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig={apiKey:"AIzaSyCCzFtgLd-Dn76q4MMbE8Dqs3ZhENfuR3E",authDomain:"offszn-portal.firebaseapp.com",projectId:"offszn-portal",storageBucket:"offszn-portal.firebasestorage.app",messagingSenderId:"1027879996229",appId:"1:1027879996229:web:7d709b06d0a5a07d2e8c2c"};
 const app=initializeApp(firebaseConfig);const auth=getAuth(app);const db=getFirestore(app);
